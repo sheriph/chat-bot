@@ -11,6 +11,16 @@
       "static/chunks/main-app.js",
       "static/chunks/app/page.js"
     ],
+    "/flight-assistant/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/flight-assistant/page.js"
+    ],
+    "/api/flight-assistant/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/flight-assistant/route.js"
+    ],
     "/api/chat/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
