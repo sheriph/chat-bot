@@ -1,5 +1,0 @@
-{
-  "/api/flight-assistant/route": "app/api/flight-assistant/route.js",
-  "/flight-assistant/page": "app/flight-assistant/page.js",
-  "/page": "app/page.js"
-}

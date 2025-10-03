@@ -1,7 +1,7 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { convertToModelMessages, streamText, type UIMessage, tool, stepCountIs } from "ai";
 import { z } from "zod";
-import { getDb } from "@/lib/mongodb";
+import { getDb, COLLECTION_NAME } from "@/lib/mongodb";
 
 export const maxDuration = 30;
 
@@ -10,28 +10,6 @@ const deepinfra = createOpenAICompatible({
   apiKey: process.env.DEEPINFRA_API_KEY!,
   baseURL: "https://api.deepinfra.com/v1/openai",
 });
-
-// Available options for dropdowns - NGabroad partner institutions
-const COUNTRIES = [
-  "United Kingdom", "United States", "Canada", "New Zealand", "Australia",
-  "Ireland", "Germany", "France", "Switzerland", "United Arab Emirates",
-  "Poland", "Spain", "Cyprus", "Italy", "Grenada", "Netherlands",
-  "Malaysia", "Mauritius", "Hungary", "Monaco", "Guyana", "Slovenia"
-];
-
-const DISCIPLINES = [
-  "Business & Management", "Social Sciences & Law", "Arts & Humanities",
-  "Health & Medicine", "Natural & Physical Sciences", "Engineering & Technology",
-  "Creative Arts & Design", "Computer Science & IT", "Education",
-  "Media & Communications", "Agriculture & Environmental Science", "Sports Science",
-  "Hospitality & Tourism", "Architecture & Construction", "Aviation & Aerospace",
-  "Theology & Religious Studies"
-];
-
-const COURSE_LEVELS = [
-  "Undergraduate", "Postgraduate", "Doctorate", "Foundation",
-  "PreMasters", "Language", "PresessionalEnglish", "ProfessionalShortCourse"
-];
 
 /**
  * NGabroad Course Program Interface
@@ -72,22 +50,21 @@ const tools = {
     description: 'Search for study abroad programs and courses from universities worldwide. Use this tool when students ask about programs, courses, universities, or study options.',
     inputSchema: z.object({
       discipline: z.enum([
-        "Business & Management", "Social Sciences & Law", "Arts & Humanities",
-        "Health & Medicine", "Natural & Physical Sciences", "Engineering & Technology",
-        "Creative Arts & Design", "Computer Science & IT", "Education",
-        "Media & Communications", "Agriculture & Environmental Science", "Sports Science",
-        "Hospitality & Tourism", "Architecture & Construction", "Aviation & Aerospace",
+        "Agriculture & Environmental Science", "Architecture & Construction", "Arts & Humanities",
+        "Aviation & Aerospace", "Business & Management", "Computer Science & IT", 
+        "Creative Arts & Design", "Education", "Engineering & Technology",
+        "Health & Medicine", "Hospitality & Tourism", "Media & Communications",
+        "Natural & Physical Sciences", "Social Sciences & Law", "Sports Science",
         "Theology & Religious Studies"
       ]).describe('Academic discipline/field of study - select the most relevant discipline'),
       country: z.enum([
-        "United Kingdom", "United States", "Canada", "New Zealand", "Australia",
-        "Ireland", "Germany", "France", "Switzerland", "United Arab Emirates",
-        "Poland", "Spain", "Cyprus", "Italy", "Grenada", "Netherlands",
-        "Malaysia", "Mauritius", "Hungary", "Monaco", "Guyana", "Slovenia"
+        "Cyprus", "France", "Grenada", "Guyana", "Hungary", "Italy", 
+        "Malaysia", "Mauritius", "Monaco", "Netherlands", "New Zealand", 
+        "Poland", "Slovenia", "Spain", "Switzerland", "United Arab Emirates"
       ]).describe('Country where the institution is located - select the target study destination'),
       courseLevel: z.enum([
-        "Undergraduate", "Postgraduate", "Doctorate", "Foundation",
-        "PreMasters", "Language", "PresessionalEnglish", "ProfessionalShortCourse"
+        "Doctorate", "Foundation", "Language", "Postgraduate", 
+        "PreMasters", "ProfessionalShortCourse", "Undergraduate"
       ]).describe('Level of study - select the appropriate academic level'),
       institutionName: z.string().optional().describe('Specific institution name to search for (e.g., "Harvard University", "Oxford University")'),
       courseName: z.string().optional().describe('Specific course name or keywords to search in course titles (e.g., "Computer Science", "MBA")'),
@@ -105,7 +82,7 @@ const tools = {
         console.log('Search Parameters:', JSON.stringify(params, null, 2));
         
         const db = await getDb('NGabroad');
-        const col = db.collection('programs');
+        const col = db.collection(COLLECTION_NAME);
 
         const page = Math.max(1, params.page || 1);
         const limit = 8; // Fixed at 8 results per page
@@ -265,7 +242,7 @@ There are ${totalPages - page} more pages available with ${totalDocs - (page * l
         console.log('=== getAggregatedStats Tool Called ===');
         
         const db = await getDb('NGabroad');
-        const col = db.collection('programs');
+        const col = db.collection(COLLECTION_NAME);
 
         const pipeline = [
           {
@@ -316,7 +293,7 @@ ${result.byCourseLevel?.map((item: any) =>
   `• **${item.level}** - ${item.count.toLocaleString()} programs`
 ).join('\n') || 'No data available'}
 
-This database covers programs from universities across 22 countries, offering comprehensive options for international students.`;
+This database covers programs from universities across 16 countries, offering comprehensive options for international students.`;
 
         console.log('=== Stats Tool Response (Markdown) ===');
         console.log(statsMarkdown);
@@ -335,7 +312,7 @@ export async function POST(req: Request) {
   try {
     const { messages }: { messages: UIMessage[] } = await req.json();
 
-    const systemPrompt = `You are Mariam, a trusted study abroad consultant representing NAIJAGOINGABROAD LTD (NGabroad). Your primary mission is to help Nigerian students discover excellent education opportunities at our 44,000+ partner institutions across 22 countries and guide them through the application process.
+    const systemPrompt = `You are Mariam, a trusted study abroad consultant representing NAIJAGOINGABROAD LTD (NGabroad). Your primary mission is to help Nigerian students discover excellent education opportunities at our 44,000+ partner institutions across 16 countries and guide them through the application process.
 
 ## Your Role & Business Mission:
 - **NGabroad Representative**: You work for NAIJAGOINGABROAD LTD, connecting students with our partner universities
@@ -343,8 +320,8 @@ export async function POST(req: Request) {
 - **Application Facilitator**: Guide students through our FREE application process and document requirements
 - **Trusted Advisor**: Provide comprehensive support on visas, budgeting, and study abroad planning
 
-## Available Study Destinations (22 Countries):
-United Kingdom, United States, Canada, Australia, New Zealand, Ireland, Germany, France, Switzerland, United Arab Emirates, Poland, Spain, Cyprus, Italy, Grenada, Netherlands, Malaysia, Mauritius, Hungary, Monaco, Guyana, Slovenia
+## Available Study Destinations (16 Countries):
+Cyprus, France, Grenada, Guyana, Hungary, Italy, Malaysia, Mauritius, Monaco, Netherlands, New Zealand, Poland, Slovenia, Spain, Switzerland, United Arab Emirates
 
 ## Your Consultation Approach:
 1. **Understand Student Needs**: Always gather their academic interests, preferred destination, study level, and budget before searching

@@ -1,10 +1,17 @@
-import { MongoClient, ServerApiVersion } from 'mongodb';
+import { MongoClient } from 'mongodb';
 
-const uri = process.env.MONGODB_URI;
+/**
+ * MongoDB configuration
+ */
+const DB_USERNAME = 'NGabroad';
+const DB_PASSWORD = 'Khashef2017';
+const DB_HOST = '72.60.69.171';
+const DB_PORT = 27017;
+const DATABASE_NAME = 'NGabroad';
+const COLLECTION_NAME = 'edvoy';
 
-if (!uri) {
-  console.warn('MONGODB_URI is not set. Set it in .env.local to enable DB access.');
-}
+// Connection URI
+const uri = `mongodb://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}`;
 
 declare global {
   // eslint-disable-next-line no-var
@@ -15,19 +22,20 @@ let client: MongoClient;
 let clientPromise: Promise<MongoClient>;
 
 if (!global._mongoClientPromise) {
-  client = new MongoClient(uri || 'mongodb://localhost:27017', {
-    serverApi: {
-      version: ServerApiVersion.v1,
-      strict: true,
-      deprecationErrors: true,
-    },
+  client = new MongoClient(uri, {
+    connectTimeoutMS: 10000,
+    socketTimeoutMS: 10000,
+    maxPoolSize: 10,
+    retryWrites: true,
   });
   global._mongoClientPromise = client.connect();
 }
 
 clientPromise = global._mongoClientPromise!;
 
-export async function getDb(dbName = 'NGabroad') {
+export async function getDb(dbName = DATABASE_NAME) {
   const cli = await clientPromise;
   return cli.db(dbName);
 }
+
+export { COLLECTION_NAME };
